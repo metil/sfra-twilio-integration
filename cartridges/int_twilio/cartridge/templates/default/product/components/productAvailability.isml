@@ -1,0 +1,11 @@
+<!-- Availability -->
+<div class="row availability product-availability" data-ready-to-order="${product.readyToOrder}" data-available="${product.available}">
+    <isinclude template="product/components/availability" />
+</div>
+
+<button type="button" class="btn btn-primary wow ${product.available || (!product.available && !product.readyToOrder) ? 'd-none':''}" data-toggle="modal" data-target="#backInStockModal">
+    ${Resource.msg('button.notify','twilio','Notify me when back in stock');}
+</button>
+
+<isinclude template="product/components/backToStockSubscription" />
+

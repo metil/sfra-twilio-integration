@@ -1,0 +1,43 @@
+{
+    "step-types": {
+        "script-module-step": [
+            {
+                "@type-id": "custom.BackInStockTwilioNotification",
+                "@supports-parallel-execution": "true",
+                "@supports-site-context": "true",
+                "@supports-organization-context": "false",
+                "description": "My custom script step type",
+                "module": "int_twilio/cartridge/scripts/steps/backInStockNotification.ds",
+                "function": "sendNotifications",
+                "transactional": "false",
+                "timeout-in-seconds": "900",
+                "parameters": {
+                    "parameter": [
+                        {
+                            "@name": "Threshold",
+                            "@type": "integer",
+                            "@required": "true",
+                            "description": "Threshold"
+                        }
+                    ]
+                },
+                "status-codes": {
+                    "status": [
+                        {
+                            "@code": "ERROR",
+                            "description": "Used when the step failed with an error."
+                        },
+                        {
+                            "@code": "FINISHED",
+                            "description": "Used when the step finished successfully."
+                        },
+                        {
+                            "@code": "FINISHED_WITH_WARNINGS",
+                            "description": "Used when the step finished with warnings."
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
