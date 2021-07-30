@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jobs xmlns="http://www.demandware.com/xml/impex/jobs/2015-07-01">
+
+    <job job-id="Twilio:BackInStockNotification" priority="0">
+        <description/>
+        <parameters/>
+        <flow>
+            <context site-id="RefArch"/>
+            <step step-id="sendNotification" type="custom.BackInStockTwilioNotification" enforce-restart="false">
+                <description/>
+                <parameters/>
+                <rules>
+                    <on-exit status="ERROR">
+                        <stop-job/>
+                    </on-exit>
+                </rules>
+            </step>
+        </flow>
+        <rules/>
+        <triggers>
+            <run-once enabled="false">
+                <date>2021-07-26Z</date>
+                <time>15:16:20.000Z</time>
+            </run-once>
+        </triggers>
+    </job>
+
+</jobs>
