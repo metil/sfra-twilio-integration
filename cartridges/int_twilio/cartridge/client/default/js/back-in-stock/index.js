@@ -77,7 +77,7 @@ module.exports = {
         $('body').on('product:updateAvailability', function (e, response) {
             const inStockButton = $('button.wow', response.$productContainer);
             $('input.back-in-stock-product', response.$productContainer).val(response.product.id);
-            if (response.product.available || (!response.product.available && !response.product.readyToOrder)) {
+            if (response.product.available || (response.product.productType === 'master')) {
                 inStockButton.addClass('d-none');
             } else {
                 inStockButton.removeClass('d-none');
