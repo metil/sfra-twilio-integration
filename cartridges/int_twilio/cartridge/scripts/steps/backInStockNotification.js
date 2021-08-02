@@ -7,6 +7,7 @@ const ArrayList = require('dw/util/ArrayList');
 const SMSService = require('*/cartridge/services/twilio/sendSMS');
 const ProductMgr = require('dw/catalog/ProductMgr');
 const Transaction = require('dw/system/Transaction');
+const collections = require('*/cartridge/scripts/util/collections');
 
 /**
  * Job execution script that send sms to customers who has subscribed for notification
@@ -20,7 +21,7 @@ const Transaction = require('dw/system/Transaction');
 
 const isInStock = (product) => {
     return product && product.getAvailabilityModel().isInStock();
-}
+};
 
 /**
  * Send SMS
@@ -30,16 +31,46 @@ const isInStock = (product) => {
 const sendSMS = (recipients, product) => {
     const productName = product.getName();
     recipients.toArray().forEach((r)=>{
-       const status = SMSService.sendSMS.call( productName, r.custom.phone);
-       if(status.status === 'OK'){
-           Transaction.wrap(() => {
-               CustomObjectMgr.remove(r);
-           });
-       } else {
-           Logger.error(status.errorMessage);
-       }
-    })
-}
+        const status = SMSService.sendSMS.call(productName, r.custom.phone);
+        if (status.status === 'OK') {
+            Transaction.wrap(() => {
+                CustomObjectMgr.remove(r);
+            });
+        } else {
+            Logger.error(status.errorMessage);
+        }
+    });
+};
+/**
+ * Process on chunks
+ * @param {dw.util.Iterator} iterator  - iterator
+ * @param {number} chunkSize  - chunks size
+ */
+const processOnChunks = (iterator, chunkSize) => {
+    let chunks = Math.ceil(iterator.count % chunkSize);
+    let start = 0;
+
+    while (chunks > 0) {
+        const list = iterator.asList(start, chunkSize);
+        const byProduct = collections.reduce(list, (a, v) => {
+            if (!a.containsKey(v.custom.product)) {
+                a.put(v.custom.product, new ArrayList());
+            }
+            a.get(a.custom.product).push(v);
+            return a;
+        }, new HashMap());
+
+        collections.forEach(byProduct.entrySet(), (e) => {
+            const product = ProductMgr.getProduct(e.key);
+            if (isInStock(product)) {
+                sendSMS(e.value, product);
+            }
+        });
+
+        start += chunkSize;
+        chunks--;
+    }
+};
 
 /**
  * main job execution
@@ -51,8 +82,6 @@ const sendNotifications = (_parameters, _stepExecution) => {
     let iterator;
     try {
         const site = Site.getCurrent();
-        const query = new HashMap();
-        query.put('custom.siteId', site.ID);
         iterator = CustomObjectMgr.queryCustomObjects(
             'twilio-back-online-notification',
             'custom.site = {0} and custom.status = {1}',
@@ -60,21 +89,8 @@ const sendNotifications = (_parameters, _stepExecution) => {
             site.ID,
             'TO_SEND'
         );
-        const list = iterator.asList().toArray();
-        const byProduct = list.reduce((r,a) => {
-            if(!r.containsKey(a.custom.product)){
-                r.put(a.custom.product, new ArrayList());
-            }
-            r.get(a.custom.product).push(a);
-            return r;
-        }, new HashMap());
 
-        byProduct.entrySet().toArray().forEach((e)=>{
-            const product = ProductMgr.getProduct(e.key);
-            if(isInStock(product)){
-                sendSMS(e.value, product);
-            }
-        });
+        processOnChunks(iterator, 500);
 
         return new system.Status(system.Status.OK, 'FINISHED');
     } catch (e) {
