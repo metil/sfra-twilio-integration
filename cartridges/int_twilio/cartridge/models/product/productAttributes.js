@@ -1,13 +1,9 @@
 'use strict';
 
-/**
- * !!!!!!!I KNOW THAT THIS IS UGLY!!!!!!!!!!!
- * Reason for this is to make the variant always selectable
- * and to add url property on which the UI relies for some reason.
- */
-
-var collections = require('*/cartridge/scripts/util/collections');
+var base = module.superModule;
 var urlHelper = require('*/cartridge/scripts/helpers/urlHelpers');
+var collections = require('*/cartridge/scripts/util/collections');
+var HashMap = require('dw/util/HashMap');
 var ImageModel = require('*/cartridge/models/product/productImages');
 
 /**
@@ -22,140 +18,85 @@ function isSwatchable(dwAttributeId) {
 }
 
 /**
- * Retrieve all attribute values
  *
- * @param {dw.catalog.ProductVariationModel} variationModel - A product's variation model
- * @param {dw.catalog.ProductVariationAttributeValue} selectedValue - Selected attribute value
- * @param {dw.catalog.ProductVariationAttribute} attr - Attribute value'
- * @param {string} endPoint - The end point to use in the Product Controller
- * @param {string} selectedOptionsQueryParams - Selected options query params
- * @param {string} quantity - Quantity selected
- * @returns {Object[]} - List of attribute value objects for template context
+ * @param v
+ * @param attrConfig
+ * @param variationModel
+ * @param byAttributeID
+ * @param item
+ * @param selectedOptionsQueryParams
+ * @param quantity
+ * @returns {*}
  */
-function getAllAttrValues(
-    variationModel,
-    selectedValue,
-    attr,
-    endPoint,
-    selectedOptionsQueryParams,
-    quantity
-) {
-    var attrValues = variationModel.getAllValues(attr);
-    var actionEndpoint = 'Product-' + endPoint;
-
-    return collections.map(attrValues, function (value) {
-        var isSelected = (selectedValue && selectedValue.equals(value)) || false;
-        var valueUrl = '';
-
-        var processedAttr = {
-            id: value.ID,
-            description: value.description,
-            displayValue: value.displayValue,
-            value: value.value,
-            selected: isSelected,
-            selectable: true
-        };
-
-
-        valueUrl = (isSelected && endPoint !== 'Show')
-                ? variationModel.urlUnselectVariationValue(actionEndpoint, attr)
-                : variationModel.urlSelectVariationValue(actionEndpoint, attr, value);
-        processedAttr.url = urlHelper.appendQueryParams(valueUrl, [selectedOptionsQueryParams,
-            'quantity=' + quantity]);
-
-
-        if (isSwatchable(attr.attributeID)) {
-            processedAttr.images = new ImageModel(value, { types: ['swatch'], quantity: 'all' });
-        }
-
-        return processedAttr;
-    });
-}
-
-/**
- * Gets the Url needed to relax the given attribute selection, this will not return
- * anything for attributes represented as swatches.
- *
- * @param {Array} values - Attribute values
- * @param {string} attrID - id of the attribute
- * @returns {string} -the Url that will remove the selected attribute.
- */
-function getAttrResetUrl(values, attrID) {
-    var urlReturned;
-    var value;
-
-    for (var i = 0; i < values.length; i++) {
-        value = values[i];
-        if (!value.images) {
-            if (value.selected) {
-                urlReturned = value.url;
-                break;
-            }
-
-            if (value.selectable) {
-                urlReturned = value.url.replace(attrID + '=' + value.value, attrID + '=');
-                break;
-            }
-        }
+function updateValue(v, attrConfig, variationModel, attribute, item, selectedOptionsQueryParams, quantity) {
+    const value = collections.find(variationModel.getAllValues(attribute), (m) => (v.id === m.getID()));
+    const toUpdate = v;
+    const valueUrl = (v.selected && attrConfig.endPoint !== 'Show')
+        ? variationModel.urlUnselectVariationValue('Product-' + attrConfig.endPoint, attribute)
+        : variationModel.urlSelectVariationValue('Product-' + attrConfig.endPoint, attribute, value);
+    toUpdate.url = urlHelper.appendQueryParams(valueUrl, [selectedOptionsQueryParams,
+        'quantity=' + quantity]);
+    toUpdate.selectable = true;
+    if (isSwatchable(item.id)) {
+        toUpdate.images = new ImageModel(value, { types: ['swatch'], quantity: 'all' });
     }
-
-    return urlReturned;
+    return toUpdate;
 }
 
 /**
- * @constructor
- * @classdesc Get a list of available attributes that matches provided config
- *
- * @param {dw.catalog.ProductVariationModel} variationModel - current product variation
- * @param {Object} attrConfig - attributes to select
- * @param {Array} attrConfig.attributes - an array of strings,representing the
- *                                        id's of product attributes.
- * @param {string} attrConfig.attributes - If this is a string and equal to '*' it signifies
- *                                         that all attributes should be returned.
- *                                         If the string is 'selected', then this is comming
- *                                         from something like a product line item, in that
- *                                         all the attributes have been selected.
- *
- * @param {string} attrConfig.endPoint - the endpoint to use when generating urls for
- *                                       product attributes
- * @param {string} selectedOptionsQueryParams - Selected options query params
- * @param {string} quantity - Quantity selected
+ * Makes all values selectable and generates to none selectable url and images
+ * @param variantValues
+ * @param attrConfig
+ * @param variationModel
+ * @param selectedOptionsQueryParams
+ * @param quantity
+ * @returns {*[]}
  */
-function VariationAttributesModel(variationModel, attrConfig, selectedOptionsQueryParams, quantity) {
-    var allAttributes = variationModel.productVariationAttributes;
-    var result = [];
-    collections.forEach(allAttributes, function (attr) {
-        var selectedValue = variationModel.getSelectedValue(attr);
-        var values = getAllAttrValues(variationModel, selectedValue, attr, attrConfig.endPoint,
-            selectedOptionsQueryParams, quantity);
-        var resetUrl = getAttrResetUrl(values, attr.ID);
+function makeAllSelectable(variantValues, attrConfig, variationModel, selectedOptionsQueryParams, quantity) {
+    const allAttributes = variationModel.productVariationAttributes;
 
-        if ((Array.isArray(attrConfig.attributes)
-            && attrConfig.attributes.indexOf(attr.attributeID) > -1)
-            || attrConfig.attributes === '*') {
-            result.push({
-                attributeId: attr.attributeID,
-                displayName: attr.displayName,
-                id: attr.ID,
-                swatchable: isSwatchable(attr.attributeID),
-                displayValue: selectedValue && selectedValue.displayValue ? selectedValue.displayValue : '',
-                values: values,
-                resetUrl: resetUrl
-            });
-        } else if (attrConfig.attributes === 'selected') {
-            result.push({
-                displayName: attr.displayName,
-                displayValue: selectedValue && selectedValue.displayValue ? selectedValue.displayValue : '',
-                attributeId: attr.attributeID,
-                id: attr.ID
-            });
-        }
+    const byAttributeID = collections.reduce(allAttributes, (a, v) => {
+        a.put(v.attributeID, v);
+        return a;
+    }, new HashMap());
+
+    const allSelectable = [];
+    variantValues.forEach(item => {
+        const it = item;
+        const vs = [];
+        item.values.forEach(v => {
+            if (!v.selectable) {
+                const toUpdate = updateValue(v, attrConfig, variationModel, byAttributeID.get(item.id), item, selectedOptionsQueryParams, quantity);
+                vs.push(toUpdate);
+                return;
+            }
+            vs.push(v);
+        });
+        it.values = vs;
+        allSelectable.push(it);
     });
-    result.forEach(function (item) {
+
+    return allSelectable;
+}
+
+/**
+ *
+ * @param variationModel
+ * @param attrConfig
+ * @param selectedOptionsQueryParams
+ * @param quantity
+ */
+function variantAttributes(variationModel, attrConfig, selectedOptionsQueryParams, quantity) {
+    // Invoke the availability model on the base
+    const result = [];
+    base.call(result, variationModel, attrConfig, selectedOptionsQueryParams, quantity);
+
+    const allSelectable = makeAllSelectable(result, attrConfig, variationModel, selectedOptionsQueryParams, quantity);
+
+    allSelectable.forEach(function (item) {
         this.push(item);
     }, this);
 }
 
-VariationAttributesModel.prototype = [];
-
-module.exports = VariationAttributesModel;
+variantAttributes.prototype = [];
+module.exports = variantAttributes;

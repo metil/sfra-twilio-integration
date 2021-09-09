@@ -3,7 +3,7 @@
     <isinclude template="product/components/availability" />
 </div>
 
-<button type="button" class="btn btn-primary wow ${product.available || (!product.available && !product.readyToOrder) ? 'd-none':''}" data-toggle="modal" data-target="#backInStockModal">
+<button type="button" class="btn btn-primary wow ${product.available || (product.productType === 'master') ? 'd-none':''}" data-toggle="modal" data-target="#backInStockModal">
     ${Resource.msg('button.notify','twilio','Notify me when back in stock');}
 </button>
 

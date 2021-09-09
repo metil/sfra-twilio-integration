@@ -27,7 +27,7 @@
                                 ${Resource.msg('label.profile.phone', 'account', null);}:
                             </label>
                             <input
-                                type="input"
+                                type="text"
                                 id="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
                                 name="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
                                 value="${pdict.backInStock.backInStockSubscribe.phone.value || ''}"
@@ -37,12 +37,11 @@
                             <div class="invalid-feedback"></div>
                         </div>
                         <input
-                            type="input"
+                            type="hidden"
                             id="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
                             name="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
                             value="${pdict.backInStock.backInStockSubscribe.product.value || ''}"
                             class="back-in-stock-product"
-                            hidden
                         >
                     </div>
                 </div>
