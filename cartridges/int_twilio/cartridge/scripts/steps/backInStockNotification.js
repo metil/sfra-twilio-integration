@@ -56,7 +56,7 @@ const processOnChunks = (iterator, chunkSize) => {
             if (!a.containsKey(v.custom.product)) {
                 a.put(v.custom.product, new ArrayList());
             }
-            a.get(a.custom.product).push(v);
+            a.get(v.custom.product).push(v);
             return a;
         }, new HashMap());
 
