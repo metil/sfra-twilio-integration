@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<form xmlns="http://www.demandware.com/xml/form/2008-04-19" secure="false">
+    <group formid="customerPhones">
+        <field type="string" formid="customerPhone" label="label.profile.phone" mandatory="false"/>
+    </group>
+</form>

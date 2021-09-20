@@ -20,28 +20,34 @@
                     <div class="back-in-stock-success d-none">${Resource.msg('msg.success', 'twilio', '');}</div>
                     <div class="back-in-stock-content">
                         <input type="hidden" name="${pdict.csrf.tokenName}" value="${pdict.csrf.token}"/>
+                        <isif condition="${session.isCustomerAuthenticated()}">
+                            <isinclude url="${URLUtils.url('CustomerPhones-Show')}"/>
+                            <div class="justify-content-center flex-row d-flex">
+                                ${Resource.msg('msg.or', 'twilio', null)}
+                            </div>
+                        </isif>
                         <div class="form-group required">
                             <label
-                                for="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
+                                    for="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
                             >
                                 ${Resource.msg('label.profile.phone', 'account', null);}:
                             </label>
                             <input
-                                type="text"
-                                id="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
-                                name="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
-                                value="${pdict.backInStock.backInStockSubscribe.phone.value || ''}"
-                                class="form-control"
-                                placeholder="+359 889989989"
+                                    type="text"
+                                    id="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
+                                    name="${pdict.backInStock.backInStockSubscribe.phone.htmlName}"
+                                    value="${pdict.backInStock.backInStockSubscribe.phone.value || ''}"
+                                    class="form-control"
+                                    placeholder="${Resource.msgf('msg.phone.number.placeholder', 'twilio', null,'+359 889989989')}"
                             >
                             <div class="invalid-feedback"></div>
                         </div>
                         <input
-                            type="hidden"
-                            id="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
-                            name="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
-                            value="${pdict.backInStock.backInStockSubscribe.product.value || ''}"
-                            class="back-in-stock-product"
+                                type="hidden"
+                                id="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
+                                name="${pdict.backInStock.backInStockSubscribe.product.htmlName}"
+                                value="${pdict.backInStock.backInStockSubscribe.product.value || ''}"
+                                class="back-in-stock-product"
                         >
                     </div>
                 </div>
@@ -54,11 +60,6 @@
                     <div class="col back-in-stock-actions">
                         <button type="submit" name="save" class="btn btn-save btn-block btn-primary">
                             ${Resource.msg('button.save', 'account', null);}
-                        </button>
-                    </div>
-                    <div class="col back-in-stock-action-close d-none">
-                        <button type="submit" name="close" class="btn btn-save btn-block btn-primary">
-                            ${Resource.msg('link.header.menu.close', 'common', null);}
                         </button>
                     </div>
                 </div>

@@ -1,0 +1,18 @@
+<!--- TEMPLATENAME: customerPhones.isml --->
+<div class="form-group required">
+    <label
+            for="${pdict.customerPhones.customerPhone.htmlName}"
+    >
+        ${Resource.msg('label.profile.phone', 'account', null);}:
+    </label>
+    <select type="text"
+            id="${pdict.customerPhones.customerPhone.htmlName}"
+            name="${pdict.customerPhones.customerPhone.htmlName}"
+            class="form-control"
+    >   <option value="none">--${Resource.msg('msg.phone.number.select', 'twilio', null)}--</option>
+        <isloop items="${pdict.phones}" var="phone">
+            <option value="${phone}">${phone}</option>
+        </isloop>
+    </select>
+    <div class="invalid-feedback"></div>
+</div>

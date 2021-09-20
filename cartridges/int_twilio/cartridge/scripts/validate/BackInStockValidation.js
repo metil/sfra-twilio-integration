@@ -5,17 +5,24 @@ const composeKey = (site, catalog, product, phone)=>{
     return Array.of(site, catalog, product, phone).join(KEY_DELIMITER);
 };
 
-const setPhoneInvalid  = (backInStock, message)=> {
+const setPhoneInvalid = (backInStock, message) => {
     backInStock.valid = false;
     backInStock.backInStockSubscribe.valid = false;
     backInStock.backInStockSubscribe.phone.valid = false;
     backInStock.backInStockSubscribe.phone.error = message;
-}
+};
+
+const setCustomerPhoneInvalid = (customerPhones, message) => {
+    customerPhones.valid = false;
+    customerPhones.customerPhones.valid = false;
+    customerPhones.customerPhones.customerPhone.valid = false;
+    customerPhones.customerPhones.customerPhone.error = message;
+};
 
 /**
  * Performs validation of the send notifications input and process the data.
- * @param res - response object that is used to set the fields errors if any
- * @returns {{valid: boolean}|{valid: boolean, site: string, product: string, phone: string, catalog: string, key: string, status: string}}
+ * @param {sfra.Response} res - response object that is used to set the fields errors if any
+ * @returns {{valid: boolean}|{valid: boolean, site: string, product: string, phone: string, catalog: string, key: string, status: string}} - validated record
  */
 const validate = (res) => {
     const Site = require('dw/system/Site');
@@ -24,11 +31,12 @@ const validate = (res) => {
     const ProductMgr = require('dw/catalog/ProductMgr');
 
     const backInStock = server.forms.getForm('back-in-stock');
+    const customerPhones = server.forms.getForm('customer-phones');
     const formErrors = require('*/cartridge/scripts/formErrors');
 
 
     if (!backInStock.valid) {
-        setPhoneInvalid(backInStock,'Incorrect Phone Format!');
+        setPhoneInvalid(backInStock, 'Incorrect Phone Format!');
         res.json({
             success: false,
             fields: formErrors.getFormErrors(backInStock)
@@ -40,7 +48,28 @@ const validate = (res) => {
 
     const productId = backInStock.backInStockSubscribe.product.htmlValue;
     const phone = backInStock.backInStockSubscribe.phone.htmlValue;
-    const phoneDigits = parseInt(phone.replace(/\D/g, ''), 10);
+    const customerPhone = customerPhones.customerPhones.customerPhone.htmlValue;
+    if ((!customerPhone || customerPhone === 'none') && !phone) {
+        setPhoneInvalid(backInStock, 'Enter a phone number!');
+        setCustomerPhoneInvalid(customerPhones, 'Select phone number!');
+        const errors = formErrors.getFormErrors(backInStock);
+        Object.assign(errors , formErrors.getFormErrors(customerPhones))
+        res.json({
+            success: false,
+            fields: errors
+        });
+        return {
+            valid: false
+        };
+    }
+
+    let phoneDigits;
+    if (customerPhone && customerPhone !== 'none') {
+        phoneDigits = parseInt(customerPhone.replace(/\D/g, ''), 10);
+    } else {
+        phoneDigits = parseInt(phone.replace(/\D/g, ''), 10);
+    }
+
 
     const product = ProductMgr.getProduct(productId);
 
